@@ -11,7 +11,7 @@ const initiateSockets = (io) => {
             socket.join('ranked-lobby');
             socket.broadcast.to('ranked-lobby').emit('playerJoiningLobby', [player.playerClientFormat]);
 
-            socket.emit('getRankedLobby', Player.rankedLobby.map((player) => {return player.playerClientFormat}));
+            socket.emit('getRankedLobby', Player.rankedLobby.map(player => player.playerClientFormat));
         });
 
         socket.on('inviteForMatch', async ({ invitedPlayerSocketId, invitingPlayer }) => {
