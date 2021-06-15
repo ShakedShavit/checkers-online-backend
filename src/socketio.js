@@ -1,5 +1,4 @@
 const { Player } = require("./utils/player");
-const User = require("./models/user");
 
 const initiateSockets = (io) => {
     io.on('connection', (socket) => {
@@ -10,7 +9,7 @@ const initiateSockets = (io) => {
             if (!player) player = new Player(socket.id, username, rank, id);
             player.addPlayerToLobby();
             socket.join('ranked-lobby');
-            socket.broadcast.to('ranked-lobby').emit('playerJoiningLobby', player.playerClientFormat);
+            socket.broadcast.to('ranked-lobby').emit('playerJoiningLobby', [player.playerClientFormat]);
 
             socket.emit('getRankedLobby', Player.rankedLobby.map((player) => {return player.playerClientFormat}));
         });
@@ -18,6 +17,11 @@ const initiateSockets = (io) => {
         socket.on('inviteForMatch', async ({ invitedPlayerSocketId, invitingPlayer }) => {
             socket.to(invitedPlayerSocketId).emit('invitedForMatchClient', { id: socket.id, ...invitingPlayer });
             player.startMatchProcess(invitedPlayerSocketId);
+
+            // Removes the two players (inviting and invited) from the lobby (both the server lobby and the client lobby state),
+            // but it doesn't remove them from the sockets lobby room
+            socket.broadcast.to('ranked-lobby').emit('playerLeavingLobby', [player.id, player.opponent.id]);
+            Player.removePlayersFromLobby([invitingPlayer.id, invitedPlayerSocketId]);
         });
 
         socket.on('acceptMatchInvite', () => {
@@ -25,8 +29,6 @@ const initiateSockets = (io) => {
 
             socket.leave('ranked-lobby');
             io.sockets.sockets.get(player.opponent.id).leave('ranked-lobby');
-
-            socket.broadcast.to('ranked-lobby').emit('playerLeavingLobby', [player.id, player.opponent.id]);
 
             player.matchAccepted();
         })
@@ -53,11 +55,22 @@ const initiateSockets = (io) => {
             }
         });
 
-        socket.on('declineMatch', async () => {
-            await quittingMatch();
-        });
+        // socket.on('declineMatch', async () => {
+        //     // socket.to('ranked-lobby').emit('playerJoiningLobby', [player.playerClientFormat, player.opponent.playerClientFormat]);
+        //     if (!player.isInMatch) {
+        //         socket.broadcast.to('ranked-lobby').emit('playerJoiningLobby', [player.playerClientFormat, player.opponent.playerClientFormat]);
+        //         player.addPlayerToLobby();
+        //         player.opponent.addPlayerToLobby();
+        //     }
+        //     await quittingMatch();
+        // });
 
         socket.on('quitMatch', async () => {
+            if (!player.isInMatch) {
+                socket.broadcast.to('ranked-lobby').emit('playerJoiningLobby', [player.playerClientFormat, player.opponent.playerClientFormat]);
+                player.addPlayerToLobby();
+                player.opponent.addPlayerToLobby();
+            }
             await quittingMatch();
             // send event to the player that quit and listen to it in lobby (not in page match)
             // send event to the opponent to listen to in tha match page)
@@ -88,7 +101,7 @@ const initiateSockets = (io) => {
             socket.leave('ranked-lobby');
             socket.broadcast.to('ranked-lobby').emit('playerLeavingLobby', [player.id]);
             player = null;
-            Player.deletePlayer(socket.id);
+            Player.removePlayersFromLobby([socket.id]);
         }
 
         // Add the logout event in the client side!

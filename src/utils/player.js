@@ -73,18 +73,7 @@ class Player {
 
                 await users[0].save();
                 await users[1].save();
-
-                // await new Promise(resolve => setTimeout(resolve, 1000));
-
-
-                // const user1 = await User.findById(this.userId);
-                // const user2 = await User.findById(this.opponent.userId);
-                // user1.rank = this.rank;
-                // user2.rank = this.opponent.rank;
-                // await user1.save();
-                // await user2.save();
             }
-            console.log('78');
             this.endMatchProcess();
         } catch(err) {
             console.log(err);
@@ -127,9 +116,12 @@ class Player {
         this.isInMatch = false;
     }
 
-    static deletePlayer(socketId) {
-        this.rankedLobby = this.rankedLobby.filter(player => player.id !== socketId);
+    static removePlayersFromLobby(socketIds) {
+        this.rankedLobby = this.rankedLobby.filter(player => !socketIds.includes(player.id));
     }
+    // static addPlayerToLobby() {
+    //     Player.rankedLobby.push(this);
+    // }
 }
 
 module.exports = { Player };
