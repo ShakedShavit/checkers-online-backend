@@ -10,7 +10,6 @@ const initiateSockets = (io) => {
             player.addPlayerToLobby();
             socket.join('ranked-lobby');
             socket.broadcast.to('ranked-lobby').emit('playerJoiningLobby', [player.playerClientFormat]);
-
             socket.emit('getRankedLobby', Player.rankedLobby.map(player => player.playerClientFormat));
         });
 
@@ -21,7 +20,7 @@ const initiateSockets = (io) => {
             // Removes the two players (inviting and invited) from the lobby (both the server lobby and the client lobby state),
             // but it doesn't remove them from the sockets lobby room
             socket.broadcast.to('ranked-lobby').emit('playerLeavingLobby', [player.id, player.opponent.id]);
-            Player.removePlayersFromLobby([invitingPlayer.id, invitedPlayerSocketId]);
+            Player.removePlayersFromLobby([player.id, invitedPlayerSocketId]);
         });
 
         socket.on('acceptMatchInvite', () => {

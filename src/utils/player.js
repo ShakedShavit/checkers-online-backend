@@ -64,7 +64,6 @@ class Player {
         try {
             if (playerRank !== this.rank || opponentRank !== this.opponent.rank) {
                 const users = await User.find({ $or: [ { _id: this.userId }, { _id: this.opponent.userId } ] });
-                console.log(users, 'users');
                 if (users.length !== 2) throw new Error('Players were not found in DB');
                
                 const playersMap = new Map([[ this.userId, this.rank ], [ this.opponent.userId, this.opponent.rank ] ])
