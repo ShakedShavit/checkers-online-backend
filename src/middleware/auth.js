@@ -1,14 +1,14 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/user');
+const jwt = require("jsonwebtoken");
+const User = require("../models/user");
 
-const auth = async(req, res, next) => {
+const auth = async (req, res, next) => {
     try {
         const token = req.header("Authorization").replace("Bearer ", "");
         const data = jwt.verify(token, process.env.TOKEN_SECRET);
 
         const user = await User.findOne({
             _id: data._id,
-            "tokens.token": token
+            "tokens.token": token,
         });
 
         if (!user) {
@@ -18,10 +18,10 @@ const auth = async(req, res, next) => {
         req.user = user;
         req.token = token;
         next();
-    } catch(err) {
+    } catch (err) {
         res.status(400).send({
             status: 400,
-            message: "Not authenticated"
+            message: "Not authenticated",
         });
     }
 };
